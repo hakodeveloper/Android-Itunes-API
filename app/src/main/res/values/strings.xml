@@ -1,5 +1,14 @@
 <resources>
     <!-- Common terms -->
     <string name="app_name">Artist Vault</string>
-    <string name="search">Buscar</string>
+    <string name="search_artist">Buscar artista</string>
+
+    <!-- Permissions -->
+    <string name="permissions_not_granted">No tengo los permisos necesarios para funcionar</string>
+
+    <!-- Networking -->
+    <string name="network_connection_error">Error en la conexión</string>
+
+    <!-- Image descriptions -->
+    <string name="description_artists_image">Imágen del artista</string>
 </resources>

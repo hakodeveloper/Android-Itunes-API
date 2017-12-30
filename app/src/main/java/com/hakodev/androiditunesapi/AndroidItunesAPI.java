@@ -2,14 +2,15 @@ package com.hakodev.androiditunesapi;
 
 import android.app.Application;
 
-import pro.oncreate.easynet.EasyNet;
-import pro.oncreate.easynet.models.NResponseModel;
+import okhttp3.OkHttpClient;
 
 public class AndroidItunesAPI extends Application {
 
-    private static Application instance = null;
+    private static AndroidItunesAPI instance = null;
 
-    public static Application getInstance() {
+    private OkHttpClient networkClient;
+
+    public static AndroidItunesAPI getInstance() {
         return instance;
     }
 
@@ -17,14 +18,10 @@ public class AndroidItunesAPI extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
-        EasyNet.getInstance()
-                .setWriteLogs(false)
-                .setDefaultRequestListener(request -> request.setHost("http://192.168.1.151:25555/BeamNGTelemetry"))
-                .addOnErrorDefaultListener(new EasyNet.OnErrorDefaultListenerWithCode(404) {
-                    @Override
-                    public void onError(NResponseModel responseModel) {
-                        // For example, intercepted error 404
-                    }
-                });
+        networkClient = new OkHttpClient();
+    }
+
+    public OkHttpClient getNetworkClient() {
+        return networkClient;
     }
 }
