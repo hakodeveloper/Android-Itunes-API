@@ -1,6 +1,8 @@
 package com.hakodev.androiditunesapi.activities;
 
 import android.Manifest;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -25,6 +27,7 @@ import com.hakodev.androiditunesapi.util.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -44,6 +47,7 @@ public class ArtistListActivity extends AppCompatActivity {
     private OkHttpClient networkClient;
     private ArtistsListAdapter artistsListAdapter;
     private ArrayList<String> artistsList = new ArrayList<>();
+    private List<Result> artists;
 
     private ConstraintLayout lytBase;
     private ListView listArtists;
@@ -96,7 +100,7 @@ public class ArtistListActivity extends AppCompatActivity {
                         new TimerTask() {
                             @Override
                             public void run() {
-                                if (txt.toString().length() > 3){
+                                if (txt.toString().length() > 3) {
                                     requestArtist(txt.toString());
                                 }
                             }
@@ -109,6 +113,9 @@ public class ArtistListActivity extends AppCompatActivity {
         networkClient = AndroidItunesAPI.getInstance().getNetworkClient();
         artistsListAdapter = new ArtistsListAdapter(this, artistsList);
         listArtists.setAdapter(artistsListAdapter);
+        listArtists.setOnItemClickListener((parent, view, position, id) -> {
+            openWebLink(artists.get(position).getArtistLinkUrl());
+        });
     }
 
     private void askForPermissions() {
@@ -151,8 +158,14 @@ public class ArtistListActivity extends AppCompatActivity {
     }
 
     private ArrayList<String> parseArtistsResponse(String body) {
-        ItunesResponse itunesResponse = new Gson().fromJson(body, ItunesResponse.class);
+        ItunesResponse itunesResponse = new ItunesResponse();
+        try {
+            itunesResponse = new Gson().fromJson(body, ItunesResponse.class);
+        } catch (IllegalStateException e) {
+            Log.d(TAG, "The Json was malformed, the request has been ignored");
+        }
         ArrayList<String> artistsNames = new ArrayList<>();
+        artists = itunesResponse.getResults();
         for (Result artist : itunesResponse.getResults()) {
             artistsNames.add(artist.getArtistName());
         }
@@ -163,5 +176,11 @@ public class ArtistListActivity extends AppCompatActivity {
         artistsList.clear();
         artistsList.addAll(artists);
         runOnUiThread(() -> artistsListAdapter.notifyDataSetChanged());
+    }
+
+    private void openWebLink(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
     }
 }
