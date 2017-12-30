@@ -1,3 +1,5 @@
 <resources>
+    <!-- Common terms -->
     <string name="app_name">Artist Vault</string>
+    <string name="search">Buscar</string>
 </resources>

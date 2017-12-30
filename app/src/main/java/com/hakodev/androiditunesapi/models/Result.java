@@ -1,4 +1,3 @@
-
 package com.hakodev.androiditunesapi.models;
 
 import com.google.gson.annotations.Expose;
