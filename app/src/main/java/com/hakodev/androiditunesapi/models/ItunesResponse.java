@@ -5,20 +5,20 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class Response {
+public class ItunesResponse {
 
     @SerializedName("resultCount")
     @Expose
-    private Long resultCount;
+    private int resultCount;
     @SerializedName("results")
     @Expose
     private List<Result> results = null;
 
-    public Long getResultCount() {
+    public int getResultCount() {
         return resultCount;
     }
 
-    public void setResultCount(Long resultCount) {
+    public void setResultCount(int resultCount) {
         this.resultCount = resultCount;
     }
 

@@ -3,20 +3,31 @@ package com.hakodev.androiditunesapi.activities;
 import android.Manifest;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.anthonycr.grant.PermissionsManager;
 import com.anthonycr.grant.PermissionsResultAction;
+import com.google.gson.Gson;
 import com.hakodev.androiditunesapi.AndroidItunesAPI;
 import com.hakodev.androiditunesapi.R;
+import com.hakodev.androiditunesapi.adapters.ArtistsListAdapter;
+import com.hakodev.androiditunesapi.models.ItunesResponse;
+import com.hakodev.androiditunesapi.models.Result;
 import com.hakodev.androiditunesapi.util.Utils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -28,9 +39,17 @@ public class ArtistListActivity extends AppCompatActivity {
 
     private final static String TAG = "ArtistListActivity";
     private final static String SEARCH_URL = "https://itunes.apple.com/search?term=%1$s&country=US&entity=musicArtist&limit=10";
+    private final static String[] DEMO_ARTISTS = {"Valentine", "Children", "Red"};
 
     private OkHttpClient networkClient;
+    private ArtistsListAdapter artistsListAdapter;
+    private ArrayList<String> artistsList = new ArrayList<>();
+
     private ConstraintLayout lytBase;
+    private ListView listArtists;
+    private EditText txtArtistSearch;
+
+    private Timer keypressTimer = new Timer();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +59,9 @@ public class ArtistListActivity extends AppCompatActivity {
         setupViews();
         init();
         askForPermissions();
+
+        int randomArtistIndex = new Random().nextInt(DEMO_ARTISTS.length);
+        requestArtist(DEMO_ARTISTS[randomArtistIndex]);
     }
 
     @Override
@@ -53,10 +75,40 @@ public class ArtistListActivity extends AppCompatActivity {
 
     private void setupViews() {
         lytBase = findViewById(R.id.lytBase);
+        listArtists = findViewById(R.id.listArtists);
+        txtArtistSearch = findViewById(R.id.txtArtistSearch);
+        txtArtistSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable txt) {
+                keypressTimer.cancel();
+                keypressTimer = new Timer();
+                keypressTimer.schedule(
+                        new TimerTask() {
+                            @Override
+                            public void run() {
+                                if (txt.toString().length() > 3){
+                                    requestArtist(txt.toString());
+                                }
+                            }
+                        }, 200);
+            }
+        });
     }
 
     private void init() {
         networkClient = AndroidItunesAPI.getInstance().getNetworkClient();
+        artistsListAdapter = new ArtistsListAdapter(this, artistsList);
+        listArtists.setAdapter(artistsListAdapter);
     }
 
     private void askForPermissions() {
@@ -90,10 +142,26 @@ public class ArtistListActivity extends AppCompatActivity {
 
                         @Override
                         public void onResponse(@NonNull Call call, @NonNull final Response response) throws IOException {
-                            String res = response.body().string();
-                            Log.w(TAG, res);
+                            String body = response.body().string();
+                            Log.w(TAG, body);
+                            buildArtistsList(parseArtistsResponse(body));
                         }
                     });
         }).start();
+    }
+
+    private ArrayList<String> parseArtistsResponse(String body) {
+        ItunesResponse itunesResponse = new Gson().fromJson(body, ItunesResponse.class);
+        ArrayList<String> artistsNames = new ArrayList<>();
+        for (Result artist : itunesResponse.getResults()) {
+            artistsNames.add(artist.getArtistName());
+        }
+        return artistsNames;
+    }
+
+    private void buildArtistsList(ArrayList<String> artists) {
+        artistsList.clear();
+        artistsList.addAll(artists);
+        runOnUiThread(() -> artistsListAdapter.notifyDataSetChanged());
     }
 }
